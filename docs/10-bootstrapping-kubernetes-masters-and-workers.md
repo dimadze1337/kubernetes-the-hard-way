@@ -6,10 +6,19 @@ In this lab you will bootstrap two Kubernetes worker nodes. The following compon
 
 The commands in this section must be run from the `jumpbox`.
 
-Copy the Kubernetes binaries and systemd unit files to each worker instance:
+Modify a bit `configs/kubelet-config.yaml`
+
+```text
+clusterDNS:
+- 10.0.0.10
+clusterDomain: cluster.local
+```
+
+
+Copy the Kubernetes binaries and systemd unit files to each instance:
 
 ```bash
-for HOST in node-0 node-1; do
+for HOST in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   SUBNET=$(grep ${HOST} machines.txt | cut -d " " -f 4)
   sed "s|SUBNET|$SUBNET|g" \
     configs/10-bridge.conf > 10-bridge.conf
@@ -23,7 +32,7 @@ done
 ```
 
 ```bash
-for HOST in node-0 node-1; do
+for HOST in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   scp \
     downloads/worker/* \
     downloads/client/kubectl \
@@ -38,19 +47,23 @@ done
 ```
 
 ```bash
-for HOST in node-0 node-1; do
+for HOST in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   scp \
     downloads/cni-plugins/* \
     root@${HOST}:~/cni-plugins/
 done
 ```
 
-The commands in the next section must be run on each worker instance: `node-0`, `node-1`. Login to the worker instance using the `ssh` command. Example:
+The commands in the next section must be run on each instance. Login to the instance using the ssh command. Example:
 
 ```bash
-ssh root@node-0
+ssh root@k8s-master-1
+ssh root@k8s-master-2
+ssh root@k8s-master-3
+ssh root@k8s-worker-1
+ssh root@k8s-worker-2
+ssh root@k8s-worker-3
 ```
-
 ## Provisioning a Kubernetes Worker Node
 
 Install the OS dependencies:
@@ -164,7 +177,7 @@ Create the `kubelet-config.yaml` configuration file:
 }
 ```
 
-### Start the Worker Services
+### Start the Services
 
 ```bash
 {
@@ -193,15 +206,19 @@ Run the following commands from the `jumpbox` machine.
 List the registered Kubernetes nodes:
 
 ```bash
-ssh root@server \
+ssh root@k8s-master-1 \
   "kubectl get nodes \
   --kubeconfig admin.kubeconfig"
 ```
 
 ```
-NAME     STATUS   ROLES    AGE    VERSION
-node-0   Ready    <none>   1m     v1.32.3
-node-1   Ready    <none>   10s    v1.32.3
+NAME           STATUS   ROLES    AGE   VERSION
+k8s-master-1   Ready    <none>   22s   v1.32.3
+k8s-master-2   Ready    <none>   25s   v1.32.3
+k8s-master-3   Ready    <none>   20s   v1.32.3
+k8s-worker-1   Ready    <none>   24s   v1.32.3
+k8s-worker-2   Ready    <none>   19s   v1.32.3
+k8s-worker-3   Ready    <none>   18s   v1.32.3
 ```
 
-Next: [Configuring kubectl for Remote Access](10-configuring-kubectl.md)
+Next: [Configuring kubectl for Remote Access](11-configuring-kubectl.md)

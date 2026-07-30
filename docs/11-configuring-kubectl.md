@@ -8,11 +8,11 @@ In this lab you will generate a kubeconfig file for the `kubectl` command line u
 
 Each kubeconfig requires a Kubernetes API Server to connect to.
 
-You should be able to ping `server.kubernetes.local` based on the `/etc/hosts` DNS entry from a previous lab.
+You should be able to ping `lb.kubernetes.local` (HaProxy balancer server) based on the `/etc/hosts` DNS entry from a previous lab.
 
 ```bash
 curl --cacert ca.crt \
-  https://server.kubernetes.local:6443/version
+  https://lb.kubernetes.local:6443/version
 ```
 
 ```text
@@ -36,7 +36,7 @@ Generate a kubeconfig file suitable for authenticating as the `admin` user:
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.crt \
     --embed-certs=true \
-    --server=https://server.kubernetes.local:6443
+    --server=https://lb.kubernetes.local:6443
 
   kubectl config set-credentials admin \
     --client-certificate=admin.crt \
@@ -51,6 +51,17 @@ Generate a kubeconfig file suitable for authenticating as the `admin` user:
 ```
 The results of running the command above should create a kubeconfig file in the default location `~/.kube/config` used by the  `kubectl` commandline tool. This also means you can run the `kubectl` command without specifying a config.
 
+## Add kubeconfig on masters
+
+```bash
+for host in k8s-master-1 k8s-master-2 k8s-master-3; do
+  ssh root@${host} '
+    mkdir -p ~/.kube
+    mv ~/admin.kubeconfig ~/.kube/config
+    chmod 600 ~/.kube/config
+  '
+done
+```
 
 ## Verification
 
@@ -74,8 +85,13 @@ kubectl get nodes
 
 ```
 NAME     STATUS   ROLES    AGE    VERSION
-node-0   Ready    <none>   10m   v1.32.3
-node-1   Ready    <none>   10m   v1.32.3
+k8s-master-1   Ready    <none>   2m32s   v1.32.3
+k8s-master-2   Ready    <none>   2m35s   v1.32.3
+k8s-master-3   Ready    <none>   2m30s   v1.32.3
+k8s-worker-1   Ready    <none>   2m34s   v1.32.3
+k8s-worker-2   Ready    <none>   2m29s   v1.32.3
+k8s-worker-3   Ready    <none>   2m28s   v1.32.3
+
 ```
 
-Next: [Provisioning Pod Network Routes](11-pod-network-routes.md)
+Next: [Provisioning Pod Network Routes](12-pod-network-routes.md)

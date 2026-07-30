@@ -24,7 +24,10 @@ envsubst < configs/encryption-config.yaml \
 Copy the `encryption-config.yaml` encryption config file to each controller instance:
 
 ```bash
-scp encryption-config.yaml root@server:~/
+for host in k8s-master-1 k8s-master-2 k8s-master-3; do
+  scp encryption-config.yaml \
+  root@${host}:~/
+done
 ```
 
-Next: [Bootstrapping the etcd Cluster](07-bootstrapping-etcd.md)
+Next: [Bootstrapping the etcd Cluster](08-bootstrapping-etcd.md)

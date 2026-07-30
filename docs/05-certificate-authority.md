@@ -42,7 +42,7 @@ Generate the certificates and private keys:
 
 ```bash
 certs=(
-  "admin" "node-0" "node-1"
+  "admin" "k8s-master-1" "k8s-master-2" "k8s-master-3" "k8s-worker-1" "k8s-worker-2" "k8s-worker-3"
   "kube-proxy" "kube-scheduler"
   "kube-controller-manager"
   "kube-api-server"
@@ -77,10 +77,10 @@ ls -1 *.crt *.key *.csr
 
 In this section you will copy the various certificates to every machine at a path where each Kubernetes component will search for its certificate pair. In a real-world environment these certificates should be treated like a set of sensitive secrets as they are used as credentials by the Kubernetes components to authenticate to each other.
 
-Copy the appropriate certificates and private keys to the `node-0` and `node-1` machines:
+Copy the appropriate certificates and private keys to the machines:
 
 ```bash
-for host in node-0 node-1; do
+for host in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   ssh root@${host} mkdir /var/lib/kubelet/
 
   scp ca.crt root@${host}:/var/lib/kubelet/
@@ -93,16 +93,18 @@ for host in node-0 node-1; do
 done
 ```
 
-Copy the appropriate certificates and private keys to the `server` machine:
+Copy the appropriate certificates and private keys to the `k8s-master-1 k8s-master-2 k8s-master-3` machines:
 
 ```bash
-scp \
+for host in k8s-master-1 k8s-master-2 k8s-master-3; do
+  scp \
   ca.key ca.crt \
   kube-api-server.key kube-api-server.crt \
   service-accounts.key service-accounts.crt \
-  root@server:~/
+  root@${host}:~/
+done
 ```
 
 > The `kube-proxy`, `kube-controller-manager`, `kube-scheduler`, and `kubelet` client certificates will be used to generate client authentication configuration files in the next lab.
 
-Next: [Generating Kubernetes Configuration Files for Authentication](05-kubernetes-configuration-files.md)
+Next: [Generating Kubernetes Configuration Files for Authentication](06-kubernetes-configuration-files.md)

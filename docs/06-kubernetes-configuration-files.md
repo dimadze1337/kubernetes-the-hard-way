@@ -10,16 +10,16 @@ In this section you will generate kubeconfig files for the `kubelet` and the `ad
 
 When generating kubeconfig files for Kubelets the client certificate matching the Kubelet's node name must be used. This will ensure Kubelets are properly authorized by the Kubernetes [Node Authorizer](https://kubernetes.io/docs/reference/access-authn-authz/node/).
 
-> The following commands must be run in the same directory used to generate the SSL certificates during the [Generating TLS Certificates](04-certificate-authority.md) lab.
+> The following commands must be run in the same directory used to generate the SSL certificates during the [Generating TLS Certificates](05-certificate-authority.md) lab.
 
-Generate a kubeconfig file for the `node-0` and `node-1` worker nodes:
+Generate a kubeconfig file for the nodes:
 
 ```bash
-for host in node-0 node-1; do
+for host in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   kubectl config set-cluster kubernetes-the-hard-way \
     --certificate-authority=ca.crt \
     --embed-certs=true \
-    --server=https://server.kubernetes.local:6443 \
+    --server=https://lb.kubernetes.local:6443 \
     --kubeconfig=${host}.kubeconfig
 
   kubectl config set-credentials system:node:${host} \
@@ -38,11 +38,19 @@ for host in node-0 node-1; do
 done
 ```
 
+```bash
+ls -1 *.kubeconfig
+```
+
 Results:
 
 ```text
-node-0.kubeconfig
-node-1.kubeconfig
+k8s-master-1.kubeconfig
+k8s-master-2.kubeconfig
+k8s-master-3.kubeconfig
+k8s-worker-1.kubeconfig
+k8s-worker-2.kubeconfig
+k8s-worker-3.kubeconfig
 ```
 
 ### The kube-proxy Kubernetes Configuration File
@@ -71,6 +79,9 @@ Generate a kubeconfig file for the `kube-proxy` service:
   kubectl config use-context default \
     --kubeconfig=kube-proxy.kubeconfig
 }
+```
+```bash
+ls -1 kube-proxy.ku*
 ```
 
 Results:
@@ -105,6 +116,10 @@ Generate a kubeconfig file for the `kube-controller-manager` service:
   kubectl config use-context default \
     --kubeconfig=kube-controller-manager.kubeconfig
 }
+```
+
+```bash
+ls -1 kube-controller-manager.ku*
 ```
 
 Results:
@@ -142,6 +157,10 @@ Generate a kubeconfig file for the `kube-scheduler` service:
 }
 ```
 
+```bash
+ls -1 kube-scheduler.ku*
+```
+
 Results:
 
 ```text
@@ -176,6 +195,10 @@ Generate a kubeconfig file for the `admin` user:
 }
 ```
 
+```bash
+ls -1 admin.ku*
+```
+
 Results:
 
 ```text
@@ -184,10 +207,10 @@ admin.kubeconfig
 
 ## Distribute the Kubernetes Configuration Files
 
-Copy the `kubelet` and `kube-proxy` kubeconfig files to the `node-0` and `node-1` machines:
+Copy the `kubelet` and `kube-proxy` kubeconfig files to the machines:
 
 ```bash
-for host in node-0 node-1; do
+for host in k8s-master-1 k8s-master-2 k8s-master-3 k8s-worker-1 k8s-worker-2 k8s-worker-3; do
   ssh root@${host} "mkdir -p /var/lib/{kube-proxy,kubelet}"
 
   scp kube-proxy.kubeconfig \
@@ -198,13 +221,15 @@ for host in node-0 node-1; do
 done
 ```
 
-Copy the `kube-controller-manager` and `kube-scheduler` kubeconfig files to the `server` machine:
+Copy the `kube-controller-manager` and `kube-scheduler` kubeconfig files to the masters machines:
 
 ```bash
-scp admin.kubeconfig \
+for host in k8s-master-1 k8s-master-2 k8s-master-3; do
+  scp admin.kubeconfig \
   kube-controller-manager.kubeconfig \
   kube-scheduler.kubeconfig \
-  root@server:~/
+  root@${host}:~/
+done
 ```
 
-Next: [Generating the Data Encryption Config and Key](06-data-encryption-keys.md)
+Next: [Generating the Data Encryption Config and Key](07-data-encryption-keys.md)
