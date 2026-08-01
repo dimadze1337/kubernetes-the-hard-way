@@ -102,39 +102,44 @@ defaults
 
 
 frontend kubernetes
+    mode tcp
     bind *:6443
     default_backend kube_api
 
 backend kube_api
+    mode tcp
     balance roundrobin
     option tcp-check
 
     server master1 192.168.31.201:6443 check
     server master2 192.168.31.202:6443 check
     server master3 192.168.31.203:6443 check
-    
+
 frontend http
+    mode http
     bind *:80
     default_backend ingress_http
 
 backend ingress_http
+    mode http
     balance roundrobin
-    option httpchk
-    server master1 192.168.31.201:30855 check
-    server master2 192.168.31.202:30855 check
-    server master3 192.168.31.203:30855 check
+    server worker1 192.168.31.204:32080 check
+    server worker2 192.168.31.205:32080 check
+    server worker3 192.168.31.206:32080 check
+
     
 frontend https
+    mode tcp
     bind *:443
     default_backend ingress_https
 
 backend ingress_https
-    balance roundrobin
-    option tcp-check
     mode tcp
-    server master1 192.168.31.201:32286 check
-    server master2 192.168.31.202:32286 check
-    server master3 192.168.31.203:32286 check
+    balance roundrobin
+    server worker1 192.168.31.204:32443 check
+    server worker2 192.168.31.205:32443 check
+    server worker3 192.168.31.206:32443 check
+
 
 ```
 

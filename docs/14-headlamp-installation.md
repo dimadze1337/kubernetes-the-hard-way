@@ -203,37 +203,92 @@ done
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
-helm install ingress-nginx ingress-nginx-*.tgz \
-  --namespace ingress-nginx \
-  --create-namespace
-  
+#helm install ingress-nginx ingress-nginx-*.tgz \
+#  --namespace ingress-nginx \
+#  --create-namespace
+
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  -n ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=32080 \
+  --set controller.service.nodePorts.https=32443
+```
+
+# Verify
+
+```bash
 kubectl get pods -n ingress-nginx
+kubectl get svc -n ingress-nginx
 ```
 
 ```text
 NAME                                        READY   STATUS    RESTARTS   AGE
-ingress-nginx-controller-7558b45cf6-hxcjm   1/1     Running   0          81s
+ingress-nginx-controller-7558b45cf6-kbnsz   1/1     Running   0          17s
+
+NAME                                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.0.0.19    <none>        80:32080/TCP,443:32443/TCP   37s
+ingress-nginx-controller-admission   ClusterIP   10.0.0.144   <none>        443/TCP                      37s
+
 ```
+
 
 # Install Headlamp
 
 ```bash
-helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
-helm repo update
+#helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+#helm repo update
 
-helm install headlamp headlamp/headlamp \
+#helm install headlamp headlamp/headlamp \
   -n headlamp \
-  --create-namespace
-  
-kubectl get svc -n headlamp
-kubectl get pods -n headlamp
+#  --create-namespace
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/headlamp/main/kubernetes-headlamp.yaml
+
+kubectl get svc -n kube-system | grep "headlamp"
+kubectl get po -n kube-system | grep "headlamp"
 ```
 
 ```text
 NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
-headlamp   ClusterIP   10.0.0.196   <none>        80/TCP    69s
+headlamp   ClusterIP   10.0.0.200   <none>        80/TCP    77s
 
 NAME                      READY   STATUS    RESTARTS   AGE
-headlamp-bdbd8bc4-l7z7f   1/1     Running   0          83s
+headlamp-747b5f4d5-wsvhx   1/1     Running   0         56s
 ```
 
+# Exposing Headlamp with an ingress server
+
+```bash
+cat > headlamp-ingress.yaml <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp
+  namespace: kube-system
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: headlamp.kubernetes.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: headlamp
+            port:
+              number: 80
+EOF
+```
+
+```bash
+kubectl apply -f headlamp-ingress.yaml
+```
+
+# Check Headlamp availability
+```bash
+curl http://headlamp.kubernetes.local/
+```
+
+Or open in browser `http://headlamp.kubernetes.local/`
