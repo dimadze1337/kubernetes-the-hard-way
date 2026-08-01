@@ -292,3 +292,39 @@ curl http://headlamp.kubernetes.local/
 ```
 
 Or open in browser `http://headlamp.kubernetes.local/`
+
+# Accessing Headlamp
+
+Going with the manual from https://headlamp.dev/docs/latest/installation/in-cluster/#using-simple-yaml
+
+Once Headlamp is up and running, be sure to enable access to it either by creating a service account or by setting up OIDC.
+
+```bash
+cat > headlamp-crb.yaml <<'EOF'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: headlamp-admin
+  namespace: kube-system
+EOF
+
+cat > headlamp-sa.yaml <<'EOF'
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-admin
+  namespace: kube-system
+EOF
+
+
+kubectl apply -f headlamp-sa.yaml
+kubectl apply -f headlamp-crb.yaml
+kubectl create token headlamp-admin -n kube-system
+```
