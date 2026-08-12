@@ -206,10 +206,11 @@ ff02::2 ip6-allrouters
 192.168.31.206 k8s-worker-3 k8s-worker-3
 ```
 
-Add two more lines into /etc/hosts
+Add three more lines into /etc/hosts
 ```text
 192.168.31.201 server.kubernetes.local server.kubernetes.local
 192.168.31.210 lb.kubernetes.local lb.kubernetes.local
+192.168.31.210 authentik.kubernetes.local
 ```
 
 At this point you should be able to SSH to each machine listed in the `machines.txt` file using a hostname.
@@ -243,14 +244,15 @@ while read IP FQDN HOST SUBNET; do
 done < machines.txt
 ```
 
-Add two more entries to /etc/hosts on each machine for the future purpose
+Add three more entries to /etc/hosts on each machine for the future purpose
 
 
 ```bash
 while read -r IP FQDN HOST SUBNET; do
     ssh -n root@"$HOST" \
       'echo "192.168.31.201 server.kubernetes.local server.kubernetes.local" >> /etc/hosts;
-       echo "192.168.31.210 lb.kubernetes.local lb.kubernetes.local" >> /etc/hosts'
+       echo "192.168.31.210 lb.kubernetes.local lb.kubernetes.local" >> /etc/hosts
+       echo "192.168.31.210 authentik.kubernetes.local authentik.kubernetes.local" >> /etc/hosts'
 done < machines.txt
 ```
 

@@ -293,7 +293,7 @@ curl http://headlamp.kubernetes.local/
 
 Or open in browser `http://headlamp.kubernetes.local/`
 
-# Accessing Headlamp
+# Initial test access to the Headlamp
 
 Going with the manual from https://headlamp.dev/docs/latest/installation/in-cluster/#using-simple-yaml
 
@@ -328,3 +328,120 @@ kubectl apply -f headlamp-sa.yaml
 kubectl apply -f headlamp-crb.yaml
 kubectl create token headlamp-admin -n kube-system
 ```
+
+# Authentik installation
+
+Install local-path-provisioner
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+kubectl get pods -n local-path-storage
+kubectl get storageclass
+```
+
+```text
+local-path-provisioner-7fbdf596b7-npv9g   1/1     Running             0          16s
+
+NAME         PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  32s
+```
+
+```bash
+kubectl patch storageclass local-path \
+  -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+
+Add helm repo and create namespace
+
+```bash
+helm repo add authentik https://charts.goauthentik.io
+helm repo update
+kubectl create namespace authentik
+```
+
+Create secret strings for our authentik-values.yaml
+
+```bash
+openssl rand -base64 48
+openssl rand -base64 32
+```
+
+Put them in the file
+
+```bash
+cat > authentik-values.yaml <<'EOF'
+authentik:
+  secret_key: "base64-48-output"
+
+  postgresql:
+    password: "base64-32-output"
+postgresql:
+  enabled: true
+  auth:
+    password: "base64-32-output"
+EOF
+```
+
+Install
+
+```bash
+helm upgrade --install authentik authentik/authentik \
+  --namespace authentik \
+  --create-namespace \
+  -f authentik-values.yaml
+```
+
+```bash
+kubectl -n authentik get pods
+```
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+authentik-postgresql-0              1/1     Running   0          11m
+authentik-server-745f766f7d-rbz6v   1/1     Running   0          2m40s
+authentik-worker-8fb45dd65-5plwz    1/1     Running   0          3m56s
+```
+
+# Install Authentik Ingress
+
+```bash
+cat > authentik-ingress.yaml <<'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authentik
+  namespace: authentik
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: authentik.kubernetes.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authentik-server
+                port:
+                  number: 80
+EOF
+
+kubectl apply -f authentik-ingress.yaml
+kubectl -n authentik get ingress
+```
+
+```text
+NAME        CLASS   HOSTS                        ADDRESS   PORTS   AGE
+authentik   nginx   authentik.kubernetes.local             80      10s
+```
+
+Check ingress
+
+```bash
+curl -i \
+  -H 'Host: authentik.kubernetes.local' \
+  http://192.168.31.204:32080/
+```
+
+Open in browser `http://authentik.kubernetes.local`
+
