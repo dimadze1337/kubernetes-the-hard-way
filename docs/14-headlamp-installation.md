@@ -443,5 +443,7 @@ curl -i \
   http://192.168.31.204:32080/
 ```
 
-Open in browser `http://authentik.kubernetes.local`
+Open in browser `http://authentik.kubernetes.local`, it should redirect to `http://authentik.kubernetes.local/if/flow/initial-setup/`
+
+Create your first admin and access to `http://authentik.kubernetes.local/if/admin/#/administration/overview`
 

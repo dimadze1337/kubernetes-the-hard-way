@@ -130,7 +130,9 @@ vi /etc/systemd/system/k8s-routes.service
 [Unit]
 Description=Kubernetes pod network routes
 Wants=network-online.target
-After=network-online.target systemd-networkd.service
+After=network-online.target
+After=systemd-networkd.service
+Requires=systemd-networkd.service
 
 [Service]
 Type=oneshot
@@ -151,6 +153,12 @@ On masters there's the same file
 ```text
 #!/bin/bash
 
+set -e
+
+while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
+    sleep 1
+done
+
 ip route add 10.200.0.0/24 via 192.168.31.204 || true
 ip route add 10.200.1.0/24 via 192.168.31.205 || true
 ip route add 10.200.2.0/24 via 192.168.31.206 || true
@@ -162,6 +170,12 @@ k8s-worker-1
 ```text
 #!/bin/bash
 
+set -e
+
+while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
+    sleep 1
+done
+
 ip route add 10.200.1.0/24 via 192.168.31.205 || true
 ip route add 10.200.2.0/24 via 192.168.31.206 || true
 ```
@@ -170,6 +184,12 @@ k8s-worker-2
 ```text
 #!/bin/bash
 
+set -e
+
+while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
+    sleep 1
+done
+
 ip route add 10.200.0.0/24 via 192.168.31.204 || true
 ip route add 10.200.2.0/24 via 192.168.31.206 || true
 ```
@@ -177,6 +197,13 @@ ip route add 10.200.2.0/24 via 192.168.31.206 || true
 k8s-worker-3
 ```text
 #!/bin/bash
+
+set -e
+
+while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
+    sleep 1
+done
+
 
 ip route add 10.200.0.0/24 via 192.168.31.204 || true
 ip route add 10.200.1.0/24 via 192.168.31.205 || true
