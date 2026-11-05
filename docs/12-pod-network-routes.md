@@ -14,9 +14,6 @@ Print the internal IP address and Pod CIDR range for each worker instance:
 
 ```bash
 {
-  MASTER_1_IP=$(grep k8s-master-1 machines.txt | cut -d " " -f 1)
-  MASTER_2_IP=$(grep k8s-master-2 machines.txt | cut -d " " -f 1)
-  MASTER_3_IP=$(grep k8s-master-3 machines.txt | cut -d " " -f 1)
   NODE_1_IP=$(grep k8s-worker-1 machines.txt | cut -d " " -f 1)
   NODE_1_SUBNET=$(grep k8s-worker-1 machines.txt | cut -d " " -f 4)
   NODE_2_IP=$(grep k8s-worker-2 machines.txt | cut -d " " -f 1)
@@ -24,30 +21,6 @@ Print the internal IP address and Pod CIDR range for each worker instance:
   NODE_3_IP=$(grep k8s-worker-3 machines.txt | cut -d " " -f 1)
   NODE_3_SUBNET=$(grep k8s-worker-3 machines.txt | cut -d " " -f 4)
 }
-```
-
-```bash
-ssh root@k8s-master-1 <<EOF
-  ip route add ${NODE_1_SUBNET} via ${NODE_1_IP}
-  ip route add ${NODE_2_SUBNET} via ${NODE_2_IP}
-  ip route add ${NODE_3_SUBNET} via ${NODE_3_IP}
-EOF
-```
-
-```bash
-ssh root@k8s-master-2 <<EOF
-  ip route add ${NODE_1_SUBNET} via ${NODE_1_IP}
-  ip route add ${NODE_2_SUBNET} via ${NODE_2_IP}
-  ip route add ${NODE_3_SUBNET} via ${NODE_3_IP}
-EOF
-```
-
-```bash
-ssh root@k8s-master-3 <<EOF
-  ip route add ${NODE_1_SUBNET} via ${NODE_1_IP}
-  ip route add ${NODE_2_SUBNET} via ${NODE_2_IP}
-  ip route add ${NODE_3_SUBNET} via ${NODE_3_IP}
-EOF
 ```
 
 ```bash
@@ -72,18 +45,6 @@ EOF
 ```
 
 ## Verification 
-
-```bash
-ssh root@k8s-master-1 ip route
-```
-
-```text
-default via 192.168.31.1 dev ens18 proto static 
-10.200.0.0/24 via 192.168.31.204 dev ens18 
-10.200.1.0/24 via 192.168.31.205 dev ens18 
-10.200.2.0/24 via 192.168.31.206 dev ens18 
-192.168.31.0/24 dev ens18 proto kernel scope link src 192.168.31.201 
-```
 
 ```bash
 ssh root@k8s-worker-1 ip route
@@ -148,23 +109,7 @@ WantedBy=multi-user.target
 vi /usr/local/bin/k8s-routes.sh
 ```
 
-On masters there's the same file
-
-```text
-#!/bin/bash
-
-set -e
-
-while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
-    sleep 1
-done
-
-ip route add 10.200.0.0/24 via 192.168.31.204 || true
-ip route add 10.200.1.0/24 via 192.168.31.205 || true
-ip route add 10.200.2.0/24 via 192.168.31.206 || true
-```
-
-On workers there's a little difference
+> Note: Master nodes are tainted with `NoSchedule`, so pods are not scheduled there. Routes are only needed on worker nodes where pods run.
 
 k8s-worker-1
 ```text
@@ -203,7 +148,6 @@ set -e
 while ! ip -4 addr show dev ens18 | grep -q 'inet '; do
     sleep 1
 done
-
 
 ip route add 10.200.0.0/24 via 192.168.31.204 || true
 ip route add 10.200.1.0/24 via 192.168.31.205 || true

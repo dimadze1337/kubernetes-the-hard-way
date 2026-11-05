@@ -76,7 +76,6 @@ ExecStart=/usr/local/bin/etcd \
 --listen-client-urls http://192.168.31.201:2379,http://127.0.0.1:2379 \
 --advertise-client-urls http://192.168.31.201:2379 \
 --initial-cluster-token etcd-cluster-0 \
---initial-cluster controller=http://127.0.0.1:2380 \
 --initial-cluster=k8s-master-1=http://192.168.31.201:2380,k8s-master-2=http://192.168.31.202:2380,k8s-master-3=http://192.168.31.203:2380 \
 --initial-cluster-state new \
 --data-dir=/var/lib/etcd
@@ -102,7 +101,6 @@ ExecStart=/usr/local/bin/etcd \
 --listen-client-urls http://192.168.31.202:2379,http://127.0.0.1:2379 \
 --advertise-client-urls http://192.168.31.202:2379 \
 --initial-cluster-token etcd-cluster-0 \
---initial-cluster controller=http://127.0.0.1:2380 \
 --initial-cluster=k8s-master-1=http://192.168.31.201:2380,k8s-master-2=http://192.168.31.202:2380,k8s-master-3=http://192.168.31.203:2380 \
 --initial-cluster-state new \
 --data-dir=/var/lib/etcd

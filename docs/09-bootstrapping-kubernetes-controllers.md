@@ -249,7 +249,7 @@ In this section you will configure RBAC permissions to allow the Kubernetes API 
 The commands in this section will affect the entire cluster and only need to be run on the k8s-master-1 machine.
 
 ```bash
-ssh root@ks8-master-1
+ssh root@k8s-master-1
 ```
 
 Create the `system:kube-apiserver-to-kubelet` [ClusterRole](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) with permissions to access the Kubelet API and perform most common tasks associated with managing pods:
